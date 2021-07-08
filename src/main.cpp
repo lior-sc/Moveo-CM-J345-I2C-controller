@@ -20,7 +20,7 @@
 
 // motor parameters
 #define J3_StepPerRev      		400
-#define J3_ReductionRatio		3
+#define J3_ReductionRatio		27
 
 #define J4_StepPerRev      		400
 #define J4_ReductionRatio		1
@@ -49,17 +49,20 @@ byte inposState = false;
 Stepper J3, J4, J5;
 
 // Misc functions
-double getSerialfloat(String str)
+void emptySerialBuffer(int iterations)
 {
-	for (int i = 0; i > 1000; i++)
+	for (int i = 0; i < iterations; i++)
 	{
 		Serial.read();
 	}
+}
+double getSerialfloat(String str)
+{
+	emptySerialBuffer(100);
 	Serial.println(str);
 	while (!Serial.available());
-	return (double)Serial.parseFloat();
+	return (double) Serial.parseFloat();
 }
-
 // Stepper movement functions
 void moveSystem()
 {
@@ -131,29 +134,57 @@ void processCmd(int size)
 {
 	//Serial.println("hey");
 	byte buff[10] = { 0 };
-	int cmdType;
-	int cmdValue[3];
+	int _cmd_type;
+	int _cmd_value[3];
+	double _double_cmd_value[3];
 
 	Wire.readBytes(buff, size);
 
-	cmdType = buff[0] << 8 | buff[1];
+	_cmd_type = buff[0] << 8 | buff[1];
 
-	cmdValue[0] = buff[2] << 8 | buff[3];
-	cmdValue[1] = buff[4] << 8 | buff[5];
-	cmdValue[1] = buff[6] << 8 | buff[7];
+	// _cmdValue[0] = buff[2] << 8 | buff[3];
+	// _cmdValue[1] = buff[4] << 8 | buff[5];
+	// _cmdValue[2] = buff[6] << 8 | buff[7];
 
-	switch (cmdType)
+	for (int i=0;i<3;i++)
+	{
+		int index = (i+1) * 2 ;
+		_cmd_value[i] = buff[index] << 8 | buff[index+1];
+		_double_cmd_value[i] = ((double)_cmd_value[i]) / 1000;
+	}
+
+
+	switch (_cmd_type)
 	{
 	default:
 		if(DEBUG)
 		{
-			Serial.println("no such option");
+			Serial.println("no such option. enter 1 in cmd_type");
 		}
 		break;
 	case 1:
-		J3.inputSetpointRad((double)cmdValue[0]);
-		J4.inputSetpointRad((double)cmdValue[1]);
-		J5.inputSetpointRad((double)cmdValue[2]);
+		bool _error_flag = false;
+		
+		for(int i=0;i<3;i++)
+		{
+			if(abs(_double_cmd_value[i])>(2*PI))
+			{
+				_error_flag=true;
+			}
+			else;
+		}
+		
+		if(_error_flag ==true)
+		{
+			break;
+		}
+		else
+		{
+			J3.inputSetpointRad(_double_cmd_value[0]);
+			J4.inputSetpointRad(_double_cmd_value[1]);
+			J5.inputSetpointRad(_double_cmd_value[2]);
+		}
+
 		break;
 	}
 
@@ -214,8 +245,8 @@ void setup(){
 void loop(){
 	if (DEBUG == true)
 	{
-		demoLoop();
-		//TestLoop();
+		//demoLoop();
+		TestLoop();
 	}
 	else
 	{
