@@ -130,30 +130,23 @@ void moveSystemJoints(double t3, double t4, double t5)
 }
 
 // I2C functions
-void processCmd(int size)
+void process_cmd(int size)
 {
-	//Serial.println("hey");
-	byte buff[10] = { 0 };
-	int _cmd_type;
-	int _cmd_value[3];
-	double _double_cmd_value[3];
+	// The buffers in the message received are arranged in Big Endian configuration (MSB first)
 
-	Wire.readBytes(buff, size);
+	uint8_t buff[7];
+	uint8_t _cmd_type;
+	double _cmd_value[3];
 
-	_cmd_type = buff[0] << 8 | buff[1];
+	Wire.readBytes(buff, 7);
 
-	// _cmdValue[0] = buff[2] << 8 | buff[3];
-	// _cmdValue[1] = buff[4] << 8 | buff[5];
-	// _cmdValue[2] = buff[6] << 8 | buff[7];
+	_cmd_type = buff[0];
 
-	for (int i=0;i<3;i++)
+	for(int i=0; i<3; i++)
 	{
-		int index = (i+1) * 2 ;
-		_cmd_value[i] = buff[index] << 8 | buff[index+1];
-		_double_cmd_value[i] = ((double)_cmd_value[i]) / 1000;
+		int16_t tmp = buff[2*i + 1] << 8 | buff[2*i + 2];
+		_cmd_value[i] = (double)tmp / 1000;
 	}
-
-
 	switch (_cmd_type)
 	{
 	default:
@@ -163,42 +156,31 @@ void processCmd(int size)
 		}
 		break;
 	case 1:
-		bool _error_flag = false;
-		
-		for(int i=0;i<3;i++)
+		for(int i=0; i<3; i++)
 		{
-			if(abs(_double_cmd_value[i])>(2*PI))
+			if(abs(_cmd_value[i])>(2*PI))
 			{
-				_error_flag=true;
+				Serial.println("Abs value of joints is too high (>2*PI)");
+				return;
 			}
 			else;
 		}
-		
-		if(_error_flag ==true)
-		{
-			break;
-		}
-		else
-		{
-			J3.inputSetpointRad(_double_cmd_value[0]);
-			J4.inputSetpointRad(_double_cmd_value[1]);
-			J5.inputSetpointRad(_double_cmd_value[2]);
-		}
-
+		J3.inputSetpointRad(_cmd_value[0]);
+		J4.inputSetpointRad(_cmd_value[1]);
+		J5.inputSetpointRad(_cmd_value[2]);
 		break;
 	}
-
 }
-void SendInPosFlag()
+void SendFlag()
 {
-	byte package[1] = { inposState };
-	Wire.write(package, 1);
+	uint8_t package = 5;
+	Wire.write(package);
 }
 void WireSetup()
 {
 	Wire.begin(0x03);
-	Wire.onRequest(SendInPosFlag);
-	Wire.onReceive(processCmd);
+	Wire.onReceive(process_cmd);
+	Wire.onRequest(SendFlag);
 }
 
 // Main loop functions
