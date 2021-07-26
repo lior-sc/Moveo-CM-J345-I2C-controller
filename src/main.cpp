@@ -144,7 +144,6 @@ void moveSystemJoints(double t3, double t4, double t5)
 void process_cmd(int size)
 {
 	// The buffers in the message received are arranged in Big Endian configuration (MSB first)
-	blink_led(3,50);
 	uint8_t buff[7];
 	uint8_t _cmd_type;
 	double _cmd_value[3];
@@ -189,7 +188,7 @@ void SendFlag()
 }
 void WireSetup()
 {
-	Wire.begin(0x03);
+	Wire.begin(3);
 	Wire.onReceive(process_cmd);
 	Wire.onRequest(SendFlag);
 }
