@@ -20,7 +20,7 @@
 
 // motor parameters
 #define J3_StepPerRev      		400
-#define J3_ReductionRatio		26.25
+#define J3_ReductionRatio		52.5
 
 #define J4_StepPerRev      		1600
 #define J4_ReductionRatio		1
@@ -29,10 +29,10 @@
 #define J5_ReductionRatio		4.4
 
 // motion parameters
-#define J3_MAX_VEL				6.28	/// [rad/s]
-#define J3ACC					2.25		/// [rad^2/s]
+#define J3_MAX_VEL				2.25		/// [rad/s]
+#define J3ACC					3.14		/// [rad^2/s]
 
-#define J4_MAX_VEL				6.28	/// [rad/s]
+#define J4_MAX_VEL				3.14		/// [rad/s]
 #define J4ACC					2.25		/// [rad^2/s]
 
 #define J5_MAX_VEL			    2.25		/// [rad/s]
